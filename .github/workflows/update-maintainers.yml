@@ -1,0 +1,2 @@
+run:
+  "nix eval --json nixpkgs/nixpkgs-unstable#lib.maintainers --apply 'builtins.mapAttrs (_: v: v.github or "")' > foo.json"
