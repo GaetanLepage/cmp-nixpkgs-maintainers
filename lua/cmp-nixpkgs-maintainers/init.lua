@@ -2,7 +2,7 @@
 -- values: github handle
 local maintainers = require 'cmp-nixpkgs-maintainers.maintainers'
 
--- print(vim.inspect(maintainers))
+maintainers.refresh_cache_if_needed()
 
 local source = {}
 

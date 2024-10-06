@@ -2,25 +2,26 @@
 local path_to_json = vim.fn.stdpath("cache") .. "/nixpkgs-maintainer.json"
 local path_to_timestamp = vim.fn.stdpath("cache") .. "/nixpkgs-maintainer.json.timestamp"
 
-local cache_lifetime_days = vim.g.cache_lifetime_days or 12
+local config = require 'cmp-nixpkgs-maintainers.config'
+local utils = require 'cmp-nixpkgs-maintainers.utils'
+
+local debug = config.debug or false
+
+local cache_lifetime_days = config.cache_lifetime_days or 12
 local cache_lifetime_s = cache_lifetime_days * (24 * 60 * 60)
 
-local json_exists = function()
+local M = {}
+M._currently_refreshing = false
+M._cached_file_is_recent = false
+M._loaded_cache_is_recent = false
+M._cached_maintainers = {}
+
+local cache_file_exists = function()
     return vim.fn.filereadable(path_to_json) == 1
 end
 
--- 3 cases:
--- - 1) Cache is absent:
---      * download now (blocking)
---      * once done, return the obtained new file
--- - 2) Cache is outdated
---      * download in the background (non-blocking)
---      * return the old cache
--- - 3) Cache is up-to date
---      * return the cache
-
-local fetch_json = function(blocking)
-    -- vim.notify("Fetching maintainer list", vim.log.levels.INFO)
+local fetch_json = function()
+    utils.log_info("Refreshing maintainers list.")
 
     local on_exit = function(out)
         local write_file_and_setup_source = function()
@@ -36,13 +37,19 @@ local fetch_json = function(blocking)
                 os.time()
             )
             timestamp_file:close()
+
+            utils.log_debug("Finished downloading.")
+
+            M._currently_refreshing = false
         end
 
+        -- TODO: can't we just copy-paste the code ?
         write_file_and_setup_source()
 
         -- vim.schedule(write_file_and_setup_source)
     end
 
+    M._currently_refreshing = true
     vim.system(
         {
             "nix",
@@ -54,7 +61,7 @@ local fetch_json = function(blocking)
         },
         { text = true, },
         on_exit
-    ):wait()
+    )
 end
 
 local json_outdated = function()
@@ -64,31 +71,48 @@ local json_outdated = function()
     return cache_age_s > cache_lifetime_s
 end
 
-if not json_exists() then
-    vim.notify(
-        "Maintainers list not found. Downloading from nixpkgs.",
-        vim.log.levels.INFO
-    )
-    fetch_json()
-    vim.notify(
-        "Finished downloading.",
-        vim.log.levels.DEBUG
-    )
-elseif json_outdated() then
-    vim.notify(
-        "maintainers outdated. Refreshing in the background.",
-        vim.log.levels.INFO
-    )
-    fetch_json()
-else
-    vim.notify(
-        "maintainers up to date",
-        vim.log.levels.DEBUG
-    )
+M.refresh_cache_if_needed = function()
+    if M._loaded_cache_is_recent or M._currently_refreshing then
+        return
+    end
+
+    M._currently_refreshing = true
+
+    if (not cache_file_exists()) or json_outdated() then
+        fetch_json()
+    else
+        utils.log_debug("Cache file is up to date")
+        M._currently_refreshing = false
+    end
 end
 
-local maintainers = vim.fn.json_decode(
-    vim.fn.readfile(path_to_json)
-)
+local load_cache_file = function()
+    return vim.fn.json_decode(vim.fn.readfile(path_to_json))
+end
 
-return maintainers
+M.get_cached_maintainers = function()
+    local cache_file_is_recent = not json_outdated()
+
+    -- Read cache file in two cases:
+    local should_read_cache_file = (
+        (M._cached_maintainers == {}) -- 1) Local cache is empty (we have not opened the cache file yet)
+        or
+        (                             -- 2) Local cache comes from an outdated cache file
+            (not M._loaded_cache_is_recent)
+            and
+            -- and the cache file has been refreshed
+            (cache_file_is_recent)
+        )
+    )
+
+    if should_read_cache_file and cache_file_exists() then
+        M._cached_maintainers = load_cache_file()
+
+        -- Check if we have loaded a recent cache file
+        M._loaded_cache_is_recent = cache_file_is_recent
+    end
+
+    return M._cached_maintainers
+end
+
+return M
