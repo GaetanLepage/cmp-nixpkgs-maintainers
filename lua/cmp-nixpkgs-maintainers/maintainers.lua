@@ -5,10 +5,7 @@ local path_to_timestamp = vim.fn.stdpath("cache") .. "/nixpkgs-maintainer.json.t
 local config = require 'cmp-nixpkgs-maintainers.config'
 local utils = require 'cmp-nixpkgs-maintainers.utils'
 
-local debug = config.debug or false
-
-local cache_lifetime_days = config.cache_lifetime_days or 12
-local cache_lifetime_s = cache_lifetime_days * (24 * 60 * 60)
+local cache_lifetime_s = config.cache_lifetime_days * (24 * 60 * 60)
 
 local M = {}
 M._currently_refreshing = false
@@ -20,33 +17,26 @@ local cache_file_exists = function()
     return vim.fn.filereadable(path_to_json) == 1
 end
 
-local fetch_json = function()
-    utils.log_info("Refreshing maintainers list.")
+local refresh_cache = function()
+    utils.log("Refreshing maintainers list.")
 
     local on_exit = function(out)
-        local write_file_and_setup_source = function()
-            local json_file = io.open(path_to_json, "w")
-            assert(json_file)
-            json_file:write(out.stdout)
-            json_file:close()
+        local json_file = io.open(path_to_json, "w")
+        assert(json_file)
+        json_file:write(out.stdout)
+        json_file:close()
 
-            -- Write a timestamp to remember when this file has been cached
-            local timestamp_file = io.open(path_to_timestamp, "w")
-            assert(timestamp_file)
-            timestamp_file:write(
-                os.time()
-            )
-            timestamp_file:close()
+        -- Write a timestamp to remember when this file has been cached
+        local timestamp_file = io.open(path_to_timestamp, "w")
+        assert(timestamp_file)
+        timestamp_file:write(
+            os.time()
+        )
+        timestamp_file:close()
 
-            utils.log_debug("Finished downloading.")
+        utils.log("Finished downloading.")
 
-            M._currently_refreshing = false
-        end
-
-        -- TODO: can't we just copy-paste the code ?
-        write_file_and_setup_source()
-
-        -- vim.schedule(write_file_and_setup_source)
+        M._currently_refreshing = false
     end
 
     M._currently_refreshing = true
@@ -79,7 +69,7 @@ M.refresh_cache_if_needed = function()
     M._currently_refreshing = true
 
     if (not cache_file_exists()) or json_outdated() then
-        fetch_json()
+        refresh_cache()
     else
         utils.log_debug("Cache file is up to date")
         M._currently_refreshing = false
@@ -87,22 +77,21 @@ M.refresh_cache_if_needed = function()
 end
 
 local load_cache_file = function()
-    return vim.fn.json_decode(vim.fn.readfile(path_to_json))
+    return vim.fn.json_decode(
+        vim.fn.readfile(path_to_json)
+    )
 end
 
 M.get_cached_maintainers = function()
     local cache_file_is_recent = not json_outdated()
 
     -- Read cache file in two cases:
+    -- 1) Local cache is empty (we have not opened the cache file yet)
+    -- 2) Local cache comes from an outdated cache file and the cache file has been refreshed
     local should_read_cache_file = (
-        (M._cached_maintainers == {}) -- 1) Local cache is empty (we have not opened the cache file yet)
+        (M._cached_maintainers == {})
         or
-        (                             -- 2) Local cache comes from an outdated cache file
-            (not M._loaded_cache_is_recent)
-            and
-            -- and the cache file has been refreshed
-            (cache_file_is_recent)
-        )
+        ((not M._loaded_cache_is_recent) and cache_file_is_recent)
     )
 
     if should_read_cache_file and cache_file_exists() then
