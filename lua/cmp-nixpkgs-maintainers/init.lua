@@ -1,13 +1,40 @@
 local maintainers = require 'cmp-nixpkgs-maintainers.maintainers'
 
-maintainers.refresh_cache_if_needed()
+local cmp_config = require 'cmp.config'
+
+
+---@class cmp_nixpkgs_maintainers.Option
+---@field public cache_lifetime integer
+
+---@type cmp_nixpkgs_maintainers.Option
+local defaults = {
+    cache_lifetime = 14,
+}
+
+---@return cmp_nixpkgs_maintainers.Option
+local validate_option = function(option)
+    option = vim.tbl_deep_extend('keep', option, defaults)
+    vim.validate({
+        cache_lifetime = { option.cache_lifetime, 'number' },
+    })
+    return option
+end
+
 
 local source = {}
 
 source.new = function()
-    return setmetatable({}, { __index = source })
+    local self = setmetatable({}, { __index = source })
+
+    local source_config = cmp_config.get_source_config "nixpkgs_maintainers" or {}
+    local config = validate_option(source_config.option)
+
+    maintainers.refresh_cache_if_needed(config.cache_lifetime)
+
+    return self
 end
 
+-- @return boolean
 source.is_available = function()
     -- Only enable when editing PR descriptions (i.e. markdown files located in /tmp)
 
@@ -20,7 +47,9 @@ source.get_trigger_characters = function()
     return { '@' }
 end
 
-source.complete = function(self, request, callback)
+source.complete = function(_, request, callback)
+    option = validate_option(request.option)
+
     local input = string.sub(
         request.context.cursor_before_line,
         request.offset - 1
@@ -39,7 +68,7 @@ source.complete = function(self, request, callback)
     if should_trigger then
         -- keys: nixpkgs handle
         -- values: github handle
-        local maintainers_table = maintainers.get_cached_maintainers()
+        local maintainers_table = maintainers.get_cached_maintainers(option.cache_lifetime)
 
         local items = {}
         for alias, github_handle in pairs(maintainers_table) do

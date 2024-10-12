@@ -2,10 +2,6 @@
 local path_to_json = vim.fn.stdpath("cache") .. "/nixpkgs-maintainer.json"
 local path_to_timestamp = vim.fn.stdpath("cache") .. "/nixpkgs-maintainer.json.timestamp"
 
-local config = require 'cmp-nixpkgs-maintainers.config'
-
-local cache_lifetime_s = config.cache_lifetime_days * (24 * 60 * 60)
-
 local M = {}
 M._currently_refreshing = false
 M._cached_file_is_recent = false
@@ -53,21 +49,23 @@ local refresh_cache = function()
     )
 end
 
-local json_outdated = function()
+local json_outdated = function(cache_lifetime_days)
+    local cache_lifetime_s = cache_lifetime_days * (24 * 60 * 60)
+
     local timestamp = vim.fn.readfile(path_to_timestamp)[1]
 
     local cache_age_s = os.difftime(os.time(), timestamp)
     return cache_age_s > cache_lifetime_s
 end
 
-M.refresh_cache_if_needed = function()
+M.refresh_cache_if_needed = function(cache_lifetime_days)
     if M._loaded_cache_is_recent or M._currently_refreshing then
         return
     end
 
     M._currently_refreshing = true
 
-    if (not cache_file_exists()) or json_outdated() then
+    if (not cache_file_exists()) or json_outdated(cache_lifetime_days) then
         refresh_cache()
     else
         M._currently_refreshing = false
@@ -80,8 +78,8 @@ local load_cache_file = function()
     )
 end
 
-M.get_cached_maintainers = function()
-    local cache_file_is_recent = not json_outdated()
+M.get_cached_maintainers = function(cache_lifetime_days)
+    local cache_file_is_recent = not json_outdated(cache_lifetime_days)
 
     -- Read cache file in two cases:
     -- 1) Local cache is empty (we have not opened the cache file yet)
