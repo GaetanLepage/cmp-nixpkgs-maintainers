@@ -3,7 +3,6 @@ local path_to_json = vim.fn.stdpath("cache") .. "/nixpkgs-maintainer.json"
 local path_to_timestamp = vim.fn.stdpath("cache") .. "/nixpkgs-maintainer.json.timestamp"
 
 local config = require 'cmp-nixpkgs-maintainers.config'
-local utils = require 'cmp-nixpkgs-maintainers.utils'
 
 local cache_lifetime_s = config.cache_lifetime_days * (24 * 60 * 60)
 
@@ -18,7 +17,7 @@ local cache_file_exists = function()
 end
 
 local refresh_cache = function()
-    utils.log("Refreshing maintainers list.")
+    print("[cmp-nixpkgs-maintainers] Refreshing maintainers list.")
 
     local on_exit = function(out)
         local json_file = io.open(path_to_json, "w")
@@ -34,7 +33,7 @@ local refresh_cache = function()
         )
         timestamp_file:close()
 
-        utils.log("Finished downloading.")
+        print("[cmp-nixpkgs-maintainers] Finished downloading.")
 
         M._currently_refreshing = false
     end
@@ -71,7 +70,6 @@ M.refresh_cache_if_needed = function()
     if (not cache_file_exists()) or json_outdated() then
         refresh_cache()
     else
-        utils.log_debug("Cache file is up to date")
         M._currently_refreshing = false
     end
 end
