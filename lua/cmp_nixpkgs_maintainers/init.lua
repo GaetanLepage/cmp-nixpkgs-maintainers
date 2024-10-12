@@ -1,4 +1,4 @@
-local maintainers = require 'cmp-nixpkgs-maintainers.maintainers'
+local maintainers = require 'cmp_nixpkgs_maintainers.maintainers'
 
 local cmp_config = require 'cmp.config'
 
