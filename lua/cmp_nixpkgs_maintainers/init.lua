@@ -27,7 +27,7 @@ source.new = function()
     local self = setmetatable({}, { __index = source })
 
     local source_config = cmp_config.get_source_config "nixpkgs_maintainers" or {}
-    local config = validate_option(source_config.option)
+    local config = validate_option(source_config.option or {})
 
     maintainers.refresh_cache_if_needed(config.cache_lifetime)
 
