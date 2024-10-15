@@ -60,6 +60,10 @@ end
 local json_outdated = function()
     local cache_lifetime_s = M.cache_lifetime_days * (24 * 60 * 60)
 
+    if vim.fn.filereadable(path_to_timestamp) == 0 then
+        return false
+    end
+
     local timestamp = vim.fn.readfile(path_to_timestamp)[1]
 
     local cache_age_s = os.difftime(os.time(), timestamp)
