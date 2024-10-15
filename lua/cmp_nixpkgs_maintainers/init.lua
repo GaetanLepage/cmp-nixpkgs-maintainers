@@ -5,10 +5,12 @@ local cmp_config = require 'cmp.config'
 
 ---@class cmp_nixpkgs_maintainers.Option
 ---@field public cache_lifetime integer
+---@field public silent boolean
 
 ---@type cmp_nixpkgs_maintainers.Option
 local defaults = {
     cache_lifetime = 14,
+    silent = false,
 }
 
 ---@return cmp_nixpkgs_maintainers.Option
@@ -16,6 +18,7 @@ local validate_option = function(option)
     option = vim.tbl_deep_extend('keep', option, defaults)
     vim.validate({
         cache_lifetime = { option.cache_lifetime, 'number' },
+        silent = { option.silent, 'boolean' },
     })
     return option
 end
@@ -29,6 +32,7 @@ source.new = function()
     local source_config = cmp_config.get_source_config "nixpkgs_maintainers" or {}
     local config = validate_option(source_config.option or {})
 
+    maintainers.silent = config.silent
     maintainers.refresh_cache_if_needed(config.cache_lifetime)
 
     return self

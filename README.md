@@ -27,6 +27,8 @@ require'cmp'.setup {
         option = {
             -- Number of days after which the list of maintainers is refreshed
             cache_lifetime = 14,
+            -- Do not print status messages
+            silent = false,
         },
     }
   }
