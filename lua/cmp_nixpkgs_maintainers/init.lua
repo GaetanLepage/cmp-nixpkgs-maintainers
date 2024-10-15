@@ -33,7 +33,8 @@ source.new = function()
     local config = validate_option(source_config.option or {})
 
     maintainers.silent = config.silent
-    maintainers.refresh_cache_if_needed(config.cache_lifetime)
+    maintainers.cache_lifetime_days = config.cache_lifetime
+    maintainers.refresh_cache_if_needed()
 
     return self
 end
@@ -72,7 +73,7 @@ source.complete = function(_, request, callback)
     if should_trigger then
         -- keys: nixpkgs handle
         -- values: github handle
-        local maintainers_table = maintainers.get_cached_maintainers(option.cache_lifetime)
+        local maintainers_table = maintainers.get_cached_maintainers()
 
         local items = {}
         for alias, github_handle in pairs(maintainers_table) do
