@@ -36,6 +36,7 @@ source.new = function()
 
     maintainers.silent = config.silent
     maintainers.cache_lifetime_days = config.cache_lifetime
+    maintainers.nixpkgs_flake_uri = config.nixpkgs_flake_uri
     maintainers.refresh_cache_if_needed()
 
     return self
