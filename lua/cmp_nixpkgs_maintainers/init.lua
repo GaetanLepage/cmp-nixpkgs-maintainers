@@ -41,11 +41,16 @@ end
 
 -- @return boolean
 source.is_available = function()
-    -- Only enable when editing PR descriptions (i.e. markdown files located in /tmp)
+    -- Only enable when editing PR descriptions (i.e. markdown files located in /tmp or /private/var)
+    if vim.o.filetype ~= 'markdown' then
+        return false
+    end
 
     local filepath = vim.fn.expand('%')
+    local is_in_linux_tmp = vim.startswith(filepath, "/tmp")
+    local is_in_darwin_tmp = vim.startswith(filepath, "/private/var/")
 
-    return (vim.o.filetype == 'markdown') and vim.startswith(filepath, "/tmp")
+    return is_in_linux_tmp or is_in_darwin_tmp
 end
 
 source.get_trigger_characters = function()
