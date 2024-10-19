@@ -90,7 +90,7 @@ local load_cache_file = function()
     )
 end
 
-M.get_cached_maintainers = function(cache_lifetime_days)
+M.get_cached_maintainers = function()
     local cache_file_is_recent = not json_outdated()
 
     -- Read cache file in two cases:
