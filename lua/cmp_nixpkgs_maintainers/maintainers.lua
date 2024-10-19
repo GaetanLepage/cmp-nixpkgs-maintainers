@@ -48,9 +48,9 @@ local refresh_cache = function()
             "nix",
             "eval",
             "--json",
-            "nixpkgs/master#lib.maintainers",
             "--apply", 'builtins.mapAttrs (_: v: v.github or "")',
             "--refresh",
+            "nixpkgs#lib.maintainers",
         },
         { text = true, },
         on_exit
