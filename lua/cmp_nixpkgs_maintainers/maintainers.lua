@@ -65,7 +65,6 @@ local json_outdated = function()
     if vim.fn.filereadable(path_to_timestamp) == 0 then
         return false
     end
-
     local timestamp = vim.fn.readfile(path_to_timestamp)[1]
 
     local cache_age_s = os.difftime(os.time(), timestamp)
@@ -87,9 +86,11 @@ M.refresh_cache_if_needed = function()
 end
 
 local load_cache_file = function()
-    return vim.fn.json_decode(
-        vim.fn.readfile(path_to_json)
-    )
+    local content = vim.fn.readfile(path_to_json)
+    if content == "" then
+        return {}
+    end
+    return vim.fn.json_decode(content)
 end
 
 M.get_cached_maintainers = function()
