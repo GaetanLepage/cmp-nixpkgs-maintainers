@@ -5,6 +5,7 @@ local path_to_timestamp = vim.fn.stdpath("cache") .. "/nixpkgs-maintainer.json.t
 local M = {}
 M.silent = false
 M.cache_lifetime_days = nil
+M.nixpkgs_flake_uri = nil
 M._currently_refreshing = false
 M._cached_file_is_recent = false
 M._loaded_cache_is_recent = false
@@ -50,7 +51,7 @@ local refresh_cache = function()
             "--json",
             "--apply", 'builtins.mapAttrs (_: v: v.github or "")',
             "--refresh",
-            "nixpkgs#lib.maintainers",
+            M.nixpkgs_flake_uri .. "#lib.maintainers",
         },
         { text = true, },
         on_exit

@@ -29,6 +29,9 @@ require'cmp'.setup {
             cache_lifetime = 14,
             -- Do not print status messages
             silent = false,
+            -- Customize the `nixpkgs` source flake for fetching the maintainers list
+            -- Example: "github:NixOS/nixpkgs/master"
+            nixpkgs_flake_uri = "nixpkgs",
         },
     }
   }

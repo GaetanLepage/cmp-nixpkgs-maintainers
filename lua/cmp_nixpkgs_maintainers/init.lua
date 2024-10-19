@@ -11,6 +11,7 @@ local cmp_config = require 'cmp.config'
 local defaults = {
     cache_lifetime = 14,
     silent = false,
+    nixpkgs_flake_uri = "nixpkgs",
 }
 
 ---@return cmp_nixpkgs_maintainers.Option
@@ -19,6 +20,7 @@ local validate_option = function(option)
     vim.validate({
         cache_lifetime = { option.cache_lifetime, 'number' },
         silent = { option.silent, 'boolean' },
+        nixpkgs_flake_uri = { option.nixpkgs_flake_uri, 'string' },
     })
     return option
 end
