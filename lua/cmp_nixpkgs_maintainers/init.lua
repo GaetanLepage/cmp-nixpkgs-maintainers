@@ -6,6 +6,7 @@ local cmp_config = require 'cmp.config'
 ---@class cmp_nixpkgs_maintainers.Option
 ---@field public cache_lifetime integer
 ---@field public silent boolean
+---@field public nixpkgs_flake_uri string
 
 ---@type cmp_nixpkgs_maintainers.Option
 local defaults = {
@@ -61,8 +62,6 @@ source.get_trigger_characters = function()
 end
 
 source.complete = function(_, request, callback)
-    option = validate_option(request.option)
-
     local input = string.sub(
         request.context.cursor_before_line,
         request.offset - 1
