@@ -18,11 +18,21 @@ local defaults = {
 ---@return cmp_nixpkgs_maintainers.Option
 local validate_option = function(option)
     option = vim.tbl_deep_extend('keep', option, defaults)
-    vim.validate({
-        cache_lifetime = { option.cache_lifetime, 'number' },
-        silent = { option.silent, 'boolean' },
-        nixpkgs_flake_uri = { option.nixpkgs_flake_uri, 'string' },
-    })
+    vim.validate(
+        'cache_lifetime',
+        option.cache_lifetime,
+        'number'
+    )
+    vim.validate(
+        'silent',
+        option.silent,
+        'boolean'
+    )
+    vim.validate(
+        'nixpkgs_flake_uri ',
+        option.nixpkgs_flake_uri,
+        'string'
+    )
     return option
 end
 
