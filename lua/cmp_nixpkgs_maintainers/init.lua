@@ -56,11 +56,11 @@ end
 -- @return boolean
 source.is_available = function()
     -- Only enable when editing PR descriptions (i.e. markdown files located in /tmp or /private/var)
-    if vim.o.filetype ~= 'markdown' then
+    if vim.bo.filetype ~= 'markdown' then
         return false
     end
 
-    local filepath = vim.fn.expand('%')
+    local filepath = vim.fn.expand('%:p')
     local is_in_linux_tmp = vim.startswith(filepath, "/tmp")
     local is_in_darwin_tmp = vim.startswith(filepath, "/private/var/")
 
@@ -72,52 +72,52 @@ source.get_trigger_characters = function()
 end
 
 source.complete = function(_, request, callback)
-    local input = string.sub(
-        request.context.cursor_before_line,
-        request.offset - 1
-    )
-    local prefix = string.sub(
-        request.context.cursor_before_line,
-        1,
-        request.offset - 1
-    )
+    -- "cc @Joh"
+    local line_before_cursor = request.context.cursor_before_line
+    local request_offset_prev = request.offset - 1
+
+    -- "cc @"
+    local prefix = line_before_cursor:sub(1, request_offset_prev)
+
+    -- "@Joh"
+    local input = line_before_cursor:sub(request_offset_prev)
 
     local should_trigger = (
         vim.startswith(input, "@")
         and (prefix == "@" or vim.endswith(prefix, " @"))
     )
 
-    if should_trigger then
-        -- keys: nixpkgs handle
-        -- values: github handle
-        local maintainers_table = maintainers.get_cached_maintainers()
-
-        local items = {}
-        for alias, github_handle in pairs(maintainers_table) do
-            table.insert(items, {
-                label = string.format("%s (@%s)", alias, github_handle),
-                textEdit = {
-                    newText = "@" .. github_handle,
-                    range = {
-                        start = {
-                            line = request.context.cursor.row - 1,
-                            character = request.context.cursor.col - 1 - #input,
-                        },
-                        ['end'] = {
-                            line = request.context.cursor.row - 1,
-                            character = request.context.cursor.col - 1,
-                        },
-                    },
-                }
-            })
-        end
-        callback {
-            items = items,
-            isIncomplete = true,
-        }
-    else
-        callback { isIncomplete = true }
+    if not should_trigger then
+        return callback { isIncomplete = true }
     end
+
+    -- keys: nixpkgs handle
+    -- values: github handle
+    local maintainers_table = maintainers.get_cached_maintainers()
+
+    local items = {}
+    for alias, github_handle in pairs(maintainers_table) do
+        table.insert(items, {
+            label = string.format("%s (@%s)", alias, github_handle),
+            textEdit = {
+                newText = "@" .. github_handle,
+                range = {
+                    start = {
+                        line = request.context.cursor.row - 1,
+                        character = request.context.cursor.col - 1 - #input,
+                    },
+                    ['end'] = {
+                        line = request.context.cursor.row - 1,
+                        character = request.context.cursor.col - 1,
+                    },
+                },
+            }
+        })
+    end
+    callback {
+        items = items,
+        isIncomplete = true,
+    }
 end
 
 return source
