@@ -1,5 +1,7 @@
 # cmp-nixpkgs-maintainers
 
+**NOTE: If you are using `blink.cmp`, check out [blink-cmp-nixpkgs-maintainers](https://github.com/GaetanLepage/blink-cmp-nixpkgs-maintainers).**
+
 This neovim plugin provides a [cmp](https://github.com/hrsh7th/nvim-cmp) source for completing
 [nixpkgs](https://github.com/NixOS/nixpkgs/)
 [maintainers](https://github.com/NixOS/nixpkgs/blob/master/maintainers/maintainer-list.nix)
