@@ -88,7 +88,7 @@ end
 
 local load_cache_file = function()
     local content = vim.fn.readfile(path_to_json)
-    if content == "" then
+    if vim.tbl_isempty(content) then
         return {}
     end
     return vim.fn.json_decode(content)
