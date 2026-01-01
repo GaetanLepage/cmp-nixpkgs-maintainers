@@ -61,10 +61,9 @@ end
 local json_outdated = function()
     local cache_lifetime_s = M.cache_lifetime_days * (24 * 60 * 60)
 
-    -- Only perform the outdated check if the timestamp file exists.
-    -- Otherwise, consider that the cache file is up to date
+    -- If the cache file is missing, refresh the cache
     if vim.fn.filereadable(path_to_timestamp) == 0 then
-        return false
+        return true
     end
     local timestamp = vim.fn.readfile(path_to_timestamp)[1]
 
